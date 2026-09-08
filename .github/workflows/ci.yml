@@ -88,3 +88,29 @@ jobs:
           if-no-files-found: error
           retention-days: 30
           compression-level: 0
+
+  release:
+    name: Release on a tag
+    needs: rfplugin
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download the package
+        uses: actions/download-artifact@v6
+        with:
+          path: artifacts
+      - name: Publish the release with the package and its digest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          package="$(find artifacts -name 'RF-Limiter.rfplugin' | head -n 1)"
+          digest="$(find artifacts -name 'RF-Limiter.rfplugin.sha256' | head -n 1)"
+          test -s "$package" && test -s "$digest"
+          gh release create "$TAG" "$package" "$digest" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "RF-Limiter $TAG" \
+            --notes "RF-Limiter $TAG, built and verified by GitHub Actions from commit $GITHUB_SHA. RackForge pins the package by version, URL and SHA-256: $(cut -d ' ' -f 1 "$digest")"

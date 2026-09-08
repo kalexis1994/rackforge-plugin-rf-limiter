@@ -1,0 +1,68 @@
+param(
+    [string]$Output = "",
+    [string]$RackForgeRoot = "",
+    [string]$Toolchain = "stable-x86_64-pc-windows-msvc"
+)
+
+$ErrorActionPreference = "Stop"
+$repoRoot = Split-Path -Parent $PSScriptRoot
+
+if ([string]::IsNullOrWhiteSpace($Output)) {
+    $Output = Join-Path $repoRoot "artifacts\RF-Limiter.rfplugin"
+}
+if ([string]::IsNullOrWhiteSpace($RackForgeRoot)) {
+    $RackForgeRoot = Join-Path (Split-Path -Parent $repoRoot) "rackforge"
+}
+if (-not $Output.EndsWith(".rfplugin")) {
+    throw "Plugin package output must end in .rfplugin"
+}
+if (Test-Path -LiteralPath $Output) {
+    # The packager refuses to overwrite, and so does this script: a stale
+    # package that silently survives a failed build is how a "fixed" bug comes
+    # back.
+    throw "Refusing to overwrite existing package: $Output"
+}
+if (-not (Test-Path -LiteralPath (Join-Path $RackForgeRoot "Cargo.toml"))) {
+    throw "RackForge checkout not found at $RackForgeRoot"
+}
+
+Push-Location $repoRoot
+try {
+    # The metadata is generated from the contract, and the runtime descriptor is
+    # generated from the manifest. Regenerating here means the version in
+    # rackforge-plugin.toml is the only place a release version is written.
+    cargo "+$Toolchain" run --locked --release -p rf-limiter-lab -- metadata
+    if ($LASTEXITCODE -ne 0) { throw "RF-Limiter metadata generation failed" }
+
+    # The component is built before the tests, not after: one of them loads the
+    # built wasm in the host's own runtime, and running it first would have it
+    # certify the *previous* build.
+    cargo "+$Toolchain" build --locked --release -p rackforge-rf-limiter --target wasm32-unknown-unknown
+    if ($LASTEXITCODE -ne 0) { throw "RF-Limiter WebAssembly build failed" }
+
+    cargo "+$Toolchain" test --locked --release --workspace
+    if ($LASTEXITCODE -ne 0) { throw "RF-Limiter tests failed" }
+
+    $outputParent = Split-Path -Parent $Output
+    New-Item -ItemType Directory -Path $outputParent -Force | Out-Null
+    $stage = Join-Path ([System.IO.Path]::GetTempPath()) ("rf-limiter-package-" + [guid]::NewGuid().ToString("N"))
+    New-Item -ItemType Directory -Path $stage | Out-Null
+    try {
+        Copy-Item -Path (Join-Path $repoRoot "plugin\package\*") -Destination $stage -Recurse
+        Copy-Item -LiteralPath (Join-Path $repoRoot "LICENSE") -Destination $stage
+        Copy-Item -LiteralPath (Join-Path $repoRoot "NOTICE.md") -Destination $stage
+        $component = Join-Path $repoRoot "target\wasm32-unknown-unknown\release\rackforge_rf_limiter.wasm"
+        cargo "+$Toolchain" run --manifest-path (Join-Path $RackForgeRoot "Cargo.toml") --locked -p rackforge-store -- pack-wasm $stage $component $Output
+        if ($LASTEXITCODE -ne 0) { throw "RackForge packaging failed" }
+    }
+    finally {
+        if (Test-Path -LiteralPath $stage) {
+            Remove-Item -LiteralPath $stage -Recurse -Force
+        }
+    }
+}
+finally {
+    Pop-Location
+}
+
+Write-Output "Packed $Output"

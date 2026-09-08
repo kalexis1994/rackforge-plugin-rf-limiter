@@ -1,0 +1,52 @@
+{
+  "banks": [
+    {
+      "id": "factory",
+      "name": "Factory",
+      "order": 0
+    }
+  ],
+  "presets": [
+    {
+      "bank": "factory",
+      "category": "Setting",
+      "description": "One decibel of headroom, two milliseconds of lookahead, the release left to the programme.",
+      "editable": false,
+      "id": "transparent",
+      "name": "Transparent",
+      "order": 0,
+      "tags": []
+    },
+    {
+      "bank": "factory",
+      "category": "Setting",
+      "description": "Three decibels in, a third of a decibel of headroom: loud, and never over.",
+      "editable": false,
+      "id": "stage",
+      "name": "Stage",
+      "order": 1,
+      "tags": []
+    },
+    {
+      "bank": "factory",
+      "category": "Setting",
+      "description": "Three decibels of headroom and a long lookahead: a net under the instrument, rarely felt.",
+      "editable": false,
+      "id": "safety",
+      "name": "Safety",
+      "order": 2,
+      "tags": []
+    },
+    {
+      "bank": "factory",
+      "category": "Setting",
+      "description": "A ceiling at minus one dBTP, unlinked sides, a fast fixed release.",
+      "editable": false,
+      "id": "broadcast",
+      "name": "Broadcast",
+      "order": 3,
+      "tags": []
+    }
+  ],
+  "schema_version": 1
+}

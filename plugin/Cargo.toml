@@ -1,0 +1,18 @@
+[package]
+name = "rackforge-rf-limiter"
+description = "Portable wasm-v1 RackForge adapter for RF-Limiter"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+rackforge-plugin-sdk.workspace = true
+rf-limiter-contract.workspace = true
+rf-limiter-dsp.workspace = true
+
+[dev-dependencies]
+libm.workspace = true

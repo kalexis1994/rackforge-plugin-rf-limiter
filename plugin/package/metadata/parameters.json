@@ -1,0 +1,206 @@
+{
+  "pages": [
+    {
+      "id": "limiter",
+      "name": "Limiter",
+      "order": 0
+    },
+    {
+      "id": "output",
+      "name": "Output",
+      "order": 1
+    }
+  ],
+  "parameters": [
+    {
+      "flags": {
+        "advanced": false,
+        "automatable": true,
+        "modulatable": true,
+        "read_only": false
+      },
+      "id": "limiter.input",
+      "index": 0,
+      "kind": {
+        "default": 0.0,
+        "maximum": 24.0,
+        "minimum": -24.0,
+        "step": 0.1,
+        "taper": "linear",
+        "type": "float",
+        "unit": "dB"
+      },
+      "name": "Input",
+      "order": 0,
+      "page": "limiter",
+      "suggested_control": "knob"
+    },
+    {
+      "flags": {
+        "advanced": false,
+        "automatable": true,
+        "modulatable": true,
+        "read_only": false
+      },
+      "id": "limiter.ceiling",
+      "index": 1,
+      "kind": {
+        "default": -1.0,
+        "maximum": 0.0,
+        "minimum": -20.0,
+        "step": 0.1,
+        "taper": "linear",
+        "type": "float",
+        "unit": "dBTP"
+      },
+      "name": "Ceiling",
+      "order": 1,
+      "page": "limiter",
+      "suggested_control": "knob"
+    },
+    {
+      "flags": {
+        "advanced": false,
+        "automatable": true,
+        "modulatable": true,
+        "read_only": false
+      },
+      "id": "limiter.release",
+      "index": 2,
+      "kind": {
+        "default": 100.0,
+        "maximum": 1000.0,
+        "minimum": 10.0,
+        "step": 1.0,
+        "taper": "logarithmic",
+        "type": "float",
+        "unit": "ms"
+      },
+      "name": "Release",
+      "order": 2,
+      "page": "limiter",
+      "suggested_control": "knob"
+    },
+    {
+      "flags": {
+        "advanced": false,
+        "automatable": true,
+        "modulatable": false,
+        "read_only": false
+      },
+      "id": "limiter.auto_release",
+      "index": 3,
+      "kind": {
+        "default": true,
+        "type": "boolean"
+      },
+      "name": "Auto Release",
+      "order": 3,
+      "page": "limiter",
+      "suggested_control": "toggle"
+    },
+    {
+      "flags": {
+        "advanced": false,
+        "automatable": true,
+        "modulatable": true,
+        "read_only": false
+      },
+      "id": "limiter.lookahead",
+      "index": 4,
+      "kind": {
+        "default": 2.0,
+        "maximum": 10.0,
+        "minimum": 0.0,
+        "step": 0.1,
+        "taper": "linear",
+        "type": "float",
+        "unit": "ms"
+      },
+      "name": "Lookahead",
+      "order": 4,
+      "page": "limiter",
+      "suggested_control": "knob"
+    },
+    {
+      "flags": {
+        "advanced": false,
+        "automatable": true,
+        "modulatable": false,
+        "read_only": false
+      },
+      "id": "limiter.link",
+      "index": 5,
+      "kind": {
+        "default": true,
+        "type": "boolean"
+      },
+      "name": "Stereo Link",
+      "order": 5,
+      "page": "limiter",
+      "suggested_control": "toggle"
+    },
+    {
+      "flags": {
+        "advanced": false,
+        "automatable": true,
+        "modulatable": false,
+        "read_only": false
+      },
+      "id": "limiter.true_peak",
+      "index": 6,
+      "kind": {
+        "default": true,
+        "type": "boolean"
+      },
+      "name": "True Peak",
+      "order": 6,
+      "page": "limiter",
+      "suggested_control": "toggle"
+    },
+    {
+      "flags": {
+        "advanced": false,
+        "automatable": true,
+        "modulatable": true,
+        "read_only": false
+      },
+      "id": "output.trim",
+      "index": 7,
+      "kind": {
+        "default": 0.0,
+        "maximum": 24.0,
+        "minimum": -24.0,
+        "step": 0.1,
+        "taper": "linear",
+        "type": "float",
+        "unit": "dB"
+      },
+      "name": "Output",
+      "order": 0,
+      "page": "output",
+      "suggested_control": "knob"
+    },
+    {
+      "flags": {
+        "advanced": false,
+        "automatable": false,
+        "modulatable": false,
+        "read_only": true
+      },
+      "id": "output.reduction",
+      "index": 8,
+      "kind": {
+        "maximum": 0.0,
+        "minimum": -30.0,
+        "type": "meter",
+        "unit": "dB"
+      },
+      "name": "Gain Reduction",
+      "order": 1,
+      "page": "output",
+      "suggested_control": "meter"
+    }
+  ],
+  "schema_version": 1
+}

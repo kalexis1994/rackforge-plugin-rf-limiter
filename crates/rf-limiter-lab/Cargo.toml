@@ -1,0 +1,21 @@
+[package]
+name = "rf-limiter-lab"
+description = "Metadata generator and bench for RF-Limiter"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "rf-limiter-lab"
+path = "src/main.rs"
+
+[dependencies]
+rf-limiter-contract.workspace = true
+rf-limiter-dsp.workspace = true
+hound = "3.5"
+serde_json = "1.0"
+
+[dev-dependencies]
+rackforge-plugin-runtime.workspace = true
+rf-limiter-contract.workspace = true

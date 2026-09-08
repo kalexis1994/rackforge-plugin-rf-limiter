@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>RF-Limiter</title>
+    <style>
+      :root {
+        --panel: #0e1216;
+        --panel-light: #161c22;
+        --enclosure: #1f262d;
+        --enclosure-edge: #36404a;
+        --ink: #e8ecef;
+        --muted: #8b96a0;
+        --accent: #e4553f;
+        --accent-dim: #6b2a20;
+        --steel: #aeb6bd;
+        --meter-track: #12181d;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+
+      body {
+        background:
+          radial-gradient(120% 80% at 50% -10%, #1b232b 0%, var(--panel) 60%),
+          repeating-linear-gradient(0deg, #10151a 0 3px, #0d1216 3px 6px);
+        color: var(--ink);
+        font-family: "Segoe UI", Roboto, system-ui, sans-serif;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 14px 20px 10px;
+        border-bottom: 1px solid #222a32;
+        flex-wrap: wrap;
+      }
+
+      .wordmark {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+      }
+
+      .subtitle {
+        color: var(--accent);
+        font-size: 12px;
+        letter-spacing: 0.04em;
+      }
+
+      .spacer {
+        flex: 1;
+      }
+
+      select,
+      button {
+        font: inherit;
+        color: var(--ink);
+        background: var(--enclosure);
+        border: 1px solid var(--enclosure-edge);
+        border-radius: 8px;
+        padding: 6px 12px;
+        cursor: pointer;
+      }
+
+      select:focus-visible,
+      button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      main {
+        flex: 1;
+        overflow: auto;
+        padding: 18px 20px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: flex-start;
+        align-content: flex-start;
+      }
+
+      .group {
+        flex: 1 1 320px;
+        background: linear-gradient(180deg, #262e36 0%, var(--enclosure) 42%, #1a2026 100%);
+        border: 1px solid var(--enclosure-edge);
+        border-radius: 16px;
+        padding: 12px 14px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        box-shadow: 0 10px 24px #0008;
+      }
+
+      .group-name {
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        font-size: 12px;
+        color: var(--muted);
+        text-transform: uppercase;
+      }
+
+      .knobs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 8px;
+        align-items: flex-end;
+      }
+
+      .knob {
+        width: 70px;
+        text-align: center;
+        touch-action: none;
+        user-select: none;
+      }
+
+      .knob.wide {
+        width: auto;
+        min-width: 70px;
+      }
+
+      .knob svg {
+        display: block;
+        margin: 0 auto;
+        cursor: ns-resize;
+      }
+
+      .knob svg:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+        border-radius: 50%;
+      }
+
+      .knob-body {
+        fill: #2a3239;
+        stroke: var(--enclosure-edge);
+        stroke-width: 1.5;
+      }
+
+      .knob svg.held .knob-body {
+        stroke: var(--accent);
+      }
+
+      .knob-sweep {
+        stroke: #a63f2e;
+        stroke-width: 2.5;
+        stroke-linecap: round;
+      }
+
+      .knob svg.held .knob-sweep {
+        stroke: var(--accent);
+      }
+
+      .knob-pointer {
+        stroke: var(--steel);
+        stroke-width: 2.5;
+        stroke-linecap: round;
+      }
+
+      .knob svg.held .knob-pointer {
+        stroke: var(--ink);
+      }
+
+      .knob .label {
+        font-size: 10px;
+        color: var(--muted);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .knob .reading {
+        font-size: 10px;
+        color: var(--ink);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .toggle {
+        width: 100%;
+        height: 46px;
+        margin-bottom: 4px;
+        border-radius: 10px;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .toggle[aria-pressed="true"] {
+        background: var(--accent-dim);
+        border-color: var(--accent);
+        box-shadow: inset 0 0 0 1px var(--accent), 0 0 12px 1px #e4553f55;
+      }
+
+      .choice {
+        display: flex;
+        gap: 4px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .choice button {
+        padding: 3px 8px;
+        font-size: 11px;
+        border-radius: 6px;
+      }
+
+      .choice button[aria-pressed="true"] {
+        background: var(--accent-dim);
+        border-color: var(--accent);
+        color: var(--ink);
+      }
+
+      .meter {
+        width: 100%;
+        display: grid;
+        gap: 4px;
+      }
+
+      .meter-track {
+        height: 14px;
+        background: var(--meter-track);
+        border: 1px solid var(--enclosure-edge);
+        border-radius: 7px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .meter-fill {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 0%;
+        background: linear-gradient(90deg, #f2a05a, var(--accent));
+        transition: width 60ms linear;
+      }
+
+      .meter-scale {
+        display: flex;
+        justify-content: space-between;
+        font-size: 9px;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .status {
+        padding: 6px 20px 10px;
+        font-size: 11px;
+        color: var(--muted);
+        border-top: 1px solid #222a32;
+        min-height: 28px;
+      }
+
+      .status.error {
+        color: #e57373;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <div class="wordmark">RF-LIMITER</div>
+        <div class="subtitle">Lookahead true-peak limiter</div>
+      </div>
+      <div class="spacer"></div>
+      <label>
+        <span class="subtitle">Setting</span>
+        <select id="presets" aria-label="Factory setting"></select>
+      </label>
+    </header>
+
+    <main id="panel"></main>
+
+    <div class="status" id="status" role="status" aria-live="polite">
+      Connecting to RackForge…
+    </div>
+
+    <script src="play.js"></script>
+  </body>
+</html>

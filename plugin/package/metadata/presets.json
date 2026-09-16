@@ -46,6 +46,26 @@
       "name": "Broadcast",
       "order": 3,
       "tags": []
+    },
+    {
+      "bank": "factory",
+      "category": "Setting",
+      "description": "Six decibels into a minus-one dBTP ceiling with three milliseconds ahead: firm level under automatic release.",
+      "editable": false,
+      "id": "dense_master",
+      "name": "Dense Master",
+      "order": 4,
+      "tags": []
+    },
+    {
+      "bank": "factory",
+      "category": "Setting",
+      "description": "A long lookahead and a deliberate fixed release catch isolated peaks with minimal movement after them.",
+      "editable": false,
+      "id": "transient_guard",
+      "name": "Transient Guard",
+      "order": 5,
+      "tags": []
     }
   ],
   "schema_version": 1

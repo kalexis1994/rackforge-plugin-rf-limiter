@@ -14,7 +14,7 @@ pub struct Preset {
     pub values: &'static [(u32, f32)],
 }
 
-pub const PRESET_COUNT: usize = 4;
+pub const PRESET_COUNT: usize = 6;
 
 pub const PRESETS: [Preset; PRESET_COUNT] = [
     Preset {
@@ -48,6 +48,23 @@ pub const PRESETS: [Preset; PRESET_COUNT] = [
             (CEILING, -1.0),
             (LINK, 0.0),
             (RELEASE, 40.0),
+            (AUTO_RELEASE, 0.0),
+        ],
+    },
+    Preset {
+        id: "dense_master",
+        name: "Dense Master",
+        description: "Six decibels into a minus-one dBTP ceiling with three milliseconds ahead: firm level under automatic release.",
+        values: &[(INPUT, 6.0), (CEILING, -1.0), (LOOKAHEAD, 3.0)],
+    },
+    Preset {
+        id: "transient_guard",
+        name: "Transient Guard",
+        description: "A long lookahead and a deliberate fixed release catch isolated peaks with minimal movement after them.",
+        values: &[
+            (CEILING, -1.0),
+            (LOOKAHEAD, 8.0),
+            (RELEASE, 180.0),
             (AUTO_RELEASE, 0.0),
         ],
     },

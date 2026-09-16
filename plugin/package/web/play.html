@@ -16,6 +16,8 @@
         --accent-dim: #6b2a20;
         --steel: #aeb6bd;
         --meter-track: #12181d;
+        --safe: #83bc8b;
+        --grid: #3b4650;
       }
 
       * {
@@ -43,7 +45,7 @@
         display: flex;
         align-items: center;
         gap: 18px;
-        padding: 14px 20px 10px;
+        padding: 12px 18px 9px;
         border-bottom: 1px solid #222a32;
         flex-wrap: wrap;
       }
@@ -82,26 +84,28 @@
       }
 
       main {
-        flex: 1;
+        flex: 0 0 auto;
         overflow: auto;
-        padding: 18px 20px;
+        padding: 12px 18px 18px;
         display: flex;
         flex-wrap: wrap;
         gap: 16px;
         align-items: flex-start;
         align-content: flex-start;
+        min-width: 0;
       }
 
       .group {
-        flex: 1 1 320px;
+        flex: 1 1 280px;
         background: linear-gradient(180deg, #262e36 0%, var(--enclosure) 42%, #1a2026 100%);
         border: 1px solid var(--enclosure-edge);
         border-radius: 16px;
-        padding: 12px 14px 16px;
+        padding: 10px 12px 13px;
         display: flex;
         flex-direction: column;
         gap: 10px;
         box-shadow: 0 10px 24px #0008;
+        min-width: 0;
       }
 
       .group-name {
@@ -117,10 +121,11 @@
         flex-wrap: wrap;
         gap: 10px 8px;
         align-items: flex-end;
+        min-width: 0;
       }
 
       .knob {
-        width: 70px;
+        width: 64px;
         text-align: center;
         touch-action: none;
         user-select: none;
@@ -202,6 +207,10 @@
         box-shadow: inset 0 0 0 1px var(--accent), 0 0 12px 1px #e4553f55;
       }
 
+      .toggle.delta[aria-pressed="true"] {
+        box-shadow: inset 0 0 0 1px var(--accent), 0 0 18px #e4553f77;
+      }
+
       .choice {
         display: flex;
         gap: 4px;
@@ -225,6 +234,8 @@
         width: 100%;
         display: grid;
         gap: 4px;
+        flex: 1 1 150px;
+        min-width: 150px;
       }
 
       .meter-track {
@@ -246,6 +257,138 @@
         transition: width 60ms linear;
       }
 
+      .meter.level .meter-fill {
+        left: 0;
+        right: auto;
+        background: linear-gradient(90deg, #587861 0%, var(--safe) 74%, #e9b85f 90%, var(--accent));
+      }
+
+      .scope-panel {
+        margin: 12px 18px 0;
+        min-width: 0;
+        display: grid;
+        grid-template-columns: minmax(230px, 0.7fr) minmax(320px, 1.3fr);
+        gap: 18px;
+        border: 1px solid var(--enclosure-edge);
+        border-radius: 16px;
+        padding: 14px 16px;
+        background: linear-gradient(115deg, #252d35 0%, #171d23 62%, #12171c 100%);
+        box-shadow: 0 10px 24px #0008;
+      }
+
+      .scope-copy {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .scope-kicker,
+      .scope-axis {
+        color: var(--muted);
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .ceiling-reading {
+        margin: 6px 0 1px;
+        font-size: clamp(24px, 3.2vw, 40px);
+        font-weight: 700;
+        letter-spacing: -0.035em;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .ceiling-summary {
+        min-height: 18px;
+        color: var(--accent);
+        font-size: 12px;
+      }
+
+      .scope-stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+        margin-top: 16px;
+      }
+
+      .scope-stat {
+        min-width: 0;
+        padding: 8px 7px;
+        border: 1px solid #323c45;
+        border-radius: 8px;
+        background: #11171c;
+      }
+
+      .scope-stat span {
+        display: block;
+        color: var(--muted);
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .scope-stat strong {
+        display: block;
+        margin-top: 3px;
+        overflow: hidden;
+        color: var(--ink);
+        font-size: 14px;
+        font-variant-numeric: tabular-nums;
+        text-overflow: ellipsis;
+      }
+
+      .scope-stat.output.safe strong {
+        color: var(--safe);
+      }
+
+      .scope-plot-wrap {
+        min-width: 0;
+        display: grid;
+        grid-template-columns: 24px minmax(250px, 1fr);
+        grid-template-rows: minmax(150px, 1fr) 16px;
+        gap: 4px 7px;
+        align-items: center;
+      }
+
+      .scope-plot-wrap .vertical {
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+      }
+
+      #reduction-history {
+        width: 100%;
+        min-height: 150px;
+        max-height: 230px;
+        display: block;
+        border-radius: 8px;
+        background: #0d1216;
+      }
+
+      .scope-grid {
+        fill: none;
+        stroke: var(--grid);
+        stroke-width: 0.6;
+      }
+
+      .scope-zero {
+        stroke: #89939b;
+        stroke-width: 0.8;
+        stroke-dasharray: 3 4;
+      }
+
+      .scope-fill {
+        fill: #e4553f24;
+      }
+
+      .scope-line {
+        fill: none;
+        stroke: var(--accent);
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
       .meter-scale {
         display: flex;
         justify-content: space-between;
@@ -265,13 +408,97 @@
       .status.error {
         color: #e57373;
       }
+
+      @media (min-width: 900px) {
+        .group[data-page="limiter"] {
+          flex-grow: 1.5;
+        }
+      }
+
+      @media (max-width: 620px) {
+        body {
+          overflow: auto;
+        }
+
+        header {
+          gap: 8px 12px;
+          padding: 10px 12px;
+        }
+
+        header .spacer {
+          display: none;
+        }
+
+        header label {
+          width: 100%;
+          display: grid;
+          grid-template-columns: auto 1fr;
+          gap: 8px;
+          align-items: center;
+        }
+
+        header select {
+          width: 100%;
+          min-height: 42px;
+        }
+
+        .scope-panel {
+          margin: 10px 10px 0;
+          grid-template-columns: 1fr;
+          gap: 10px;
+          padding: 12px;
+        }
+
+        .scope-plot-wrap {
+          grid-template-columns: 18px minmax(180px, 1fr);
+          min-height: 190px;
+        }
+
+        main {
+          overflow: visible;
+          padding: 10px;
+          gap: 10px;
+        }
+
+        .group {
+          flex: none;
+          width: 100%;
+        }
+
+        .knobs {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          justify-items: center;
+          align-items: end;
+        }
+
+        .knob {
+          width: 100%;
+          min-width: 0;
+        }
+
+        .knob.wide,
+        .meter {
+          grid-column: 1 / -1;
+          width: 100%;
+          min-width: 0;
+        }
+
+        .toggle {
+          min-height: 50px;
+        }
+
+        .status {
+          padding-inline: 12px;
+        }
+      }
     </style>
   </head>
   <body>
     <header>
       <div>
         <div class="wordmark">RF-LIMITER</div>
-        <div class="subtitle">Lookahead true-peak limiter</div>
+        <div class="subtitle">True peak · lookahead · final protection</div>
       </div>
       <div class="spacer"></div>
       <label>
@@ -279,6 +506,33 @@
         <select id="presets" aria-label="Factory setting"></select>
       </label>
     </header>
+
+    <section class="scope-panel" aria-label="Limiter activity">
+      <div class="scope-copy">
+        <div class="scope-kicker">Final ceiling</div>
+        <div class="ceiling-reading" id="ceiling-reading">−1.0 dBTP</div>
+        <div class="ceiling-summary" id="ceiling-summary">True peak · 2× lookahead</div>
+        <div class="scope-stats">
+          <div class="scope-stat"><span>Input</span><strong id="scope-input">−60.0 dB</strong></div>
+          <div class="scope-stat"><span>Reduction</span><strong id="scope-reduction">0.0 dB</strong></div>
+          <div class="scope-stat output safe" id="scope-output-box"><span>Output</span><strong id="scope-output">−60.0 dB</strong></div>
+        </div>
+      </div>
+      <div class="scope-plot-wrap">
+        <span class="scope-axis vertical">Reduction</span>
+        <svg id="reduction-history" viewBox="0 0 200 80" role="img" aria-label="Recent gain reduction history">
+          <g class="scope-grid">
+            <path d="M 5 6 V 74 M 52.5 6 V 74 M 100 6 V 74 M 147.5 6 V 74 M 195 6 V 74" />
+            <path d="M 5 6 H 195 M 5 28.7 H 195 M 5 51.3 H 195 M 5 74 H 195" />
+          </g>
+          <line class="scope-zero" x1="5" y1="6" x2="195" y2="6" />
+          <path class="scope-fill" id="history-fill" />
+          <path class="scope-line" id="history-line" />
+        </svg>
+        <span></span>
+        <span class="scope-axis">Recent activity · 0 to −30 dB</span>
+      </div>
+    </section>
 
     <main id="panel"></main>
 

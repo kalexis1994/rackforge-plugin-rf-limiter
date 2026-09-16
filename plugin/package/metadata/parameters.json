@@ -200,6 +200,64 @@
       "order": 1,
       "page": "output",
       "suggested_control": "meter"
+    },
+    {
+      "flags": {
+        "advanced": false,
+        "automatable": true,
+        "modulatable": false,
+        "read_only": false
+      },
+      "id": "output.delta_listen",
+      "index": 9,
+      "kind": {
+        "default": false,
+        "type": "boolean"
+      },
+      "name": "Delta Listen",
+      "order": 2,
+      "page": "output",
+      "suggested_control": "toggle"
+    },
+    {
+      "flags": {
+        "advanced": false,
+        "automatable": false,
+        "modulatable": false,
+        "read_only": true
+      },
+      "id": "meter.input",
+      "index": 10,
+      "kind": {
+        "maximum": 12.0,
+        "minimum": -60.0,
+        "type": "meter",
+        "unit": "dB"
+      },
+      "name": "Input Peak",
+      "order": 3,
+      "page": "output",
+      "suggested_control": "meter"
+    },
+    {
+      "flags": {
+        "advanced": false,
+        "automatable": false,
+        "modulatable": false,
+        "read_only": true
+      },
+      "id": "meter.output",
+      "index": 11,
+      "kind": {
+        "maximum": 12.0,
+        "minimum": -60.0,
+        "type": "meter",
+        "unit": "dB"
+      },
+      "name": "Output Peak",
+      "order": 4,
+      "page": "output",
+      "suggested_control": "meter"
     }
   ],
   "schema_version": 1

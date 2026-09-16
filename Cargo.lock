@@ -702,7 +702,7 @@ source = "git+https://github.com/kalexis1994/rackforge.git?rev=566597d59b0e80657
 
 [[package]]
 name = "rackforge-rf-limiter"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "libm",
  "rackforge-plugin-sdk",
@@ -738,11 +738,11 @@ dependencies = [
 
 [[package]]
 name = "rf-limiter-contract"
-version = "0.1.0"
+version = "0.2.0"
 
 [[package]]
 name = "rf-limiter-dsp"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "libm",
  "rf-limiter-contract",
@@ -750,7 +750,7 @@ dependencies = [
 
 [[package]]
 name = "rf-limiter-lab"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "hound",
  "rackforge-plugin-runtime",

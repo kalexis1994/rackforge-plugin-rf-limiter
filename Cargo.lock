@@ -689,7 +689,7 @@ checksum = "f8dcc9c7d52a811697d2151c701e0d08956f92b0e24136cf4cf27b57a6a0d9bf"
 [[package]]
 name = "rackforge-plugin-runtime"
 version = "0.1.20"
-source = "git+https://github.com/kalexis1994/rackforge.git?rev=566597d59b0e80657b0adb7a1d439e4b3ecd6013#566597d59b0e80657b0adb7a1d439e4b3ecd6013"
+source = "git+https://github.com/kalexis1994/rackforge.git?rev=1cd7b21c86275c65aec402045f1d3593c3ab812b#1cd7b21c86275c65aec402045f1d3593c3ab812b"
 dependencies = [
  "anyhow",
  "wasmtime",
@@ -698,7 +698,7 @@ dependencies = [
 [[package]]
 name = "rackforge-plugin-sdk"
 version = "0.1.20"
-source = "git+https://github.com/kalexis1994/rackforge.git?rev=566597d59b0e80657b0adb7a1d439e4b3ecd6013#566597d59b0e80657b0adb7a1d439e4b3ecd6013"
+source = "git+https://github.com/kalexis1994/rackforge.git?rev=1cd7b21c86275c65aec402045f1d3593c3ab812b#1cd7b21c86275c65aec402045f1d3593c3ab812b"
 
 [[package]]
 name = "rackforge-rf-limiter"

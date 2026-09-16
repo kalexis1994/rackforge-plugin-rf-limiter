@@ -4,8 +4,8 @@
  * The page builds itself from the parameter schema the host sends back, so it
  * has no private list of controls: adding one in the Rust contract makes it
  * appear here. Pages become groups; a float is a knob, a boolean a switch, an
- * enum a row of choices, a meter a bar that is read back from the engine
- * while the page is visible.
+ * enum a row of choices, and a meter a bar updated by RackForge's canonical
+ * parameter stream.
  *
  * Three things this surface has to get right to be usable on a stage rather
  * than in a screenshot.
@@ -36,8 +36,6 @@
   const STATUS_LINGER = 4000;
   /// How long to wait for the host before giving up on a request.
   const REQUEST_TIMEOUT = 8000;
-  /// How often the meters are read while the page is visible.
-  const METER_INTERVAL = 120;
 
   const panelElement = document.getElementById("panel");
   const presetElement = document.getElementById("presets");
@@ -66,7 +64,6 @@
   let lastWriteAt = 0;
   let refreshTimer = null;
   let statusTimer = null;
-  let meterTimer = null;
 
   /* --------------------------------------------------------------- bridge */
 
@@ -114,6 +111,15 @@
       return;
     }
 
+    if (message.kind === "parameter_changed") {
+      applyValues(
+        [{ index: message.parameter_index, value: message.value }],
+        writeEpoch,
+      );
+      publishSurfaceInfo();
+      return;
+    }
+
     if (message.kind !== "response") return;
     const waiting = pending.get(message.request_id);
     if (!waiting) return;
@@ -150,7 +156,6 @@
   window.addEventListener("pagehide", endGestures);
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) endGestures();
-    scheduleMeters();
   });
 
   /* ---------------------------------------------------------------- status */
@@ -186,7 +191,7 @@
 
   function valueOf(parameter) {
     const stored = state.values.get(parameter.index);
-    if (stored !== undefined) return stored;
+    if (Number.isFinite(stored)) return stored;
     const kind = parameter.kind;
     if (kind.type === "boolean") return kind.default ? 1 : 0;
     if (kind.type === "meter") return kind.maximum;
@@ -569,21 +574,6 @@
     call("plugin.set_surface_info", { label: SURFACE_LABEL, value: value }).catch(() => undefined);
   }
 
-  /**
-   * Reads the meters back while the page is visible. The read is the same
-   * `plugin.parameters` the page refreshes with, so it respects a held
-   * control and a write in flight the same way.
-   */
-  function scheduleMeters() {
-    clearInterval(meterTimer);
-    meterTimer = null;
-    if (document.hidden || state.meters.length === 0) return;
-    meterTimer = setInterval(() => {
-      if (state.queue.size > 0 || writing) return;
-      refresh(true);
-    }, METER_INTERVAL);
-  }
-
   /* ------------------------------------------------------------- presets */
 
   function renderPresetList() {
@@ -620,6 +610,7 @@
 
   function applyValues(values, readEpoch) {
     (values || []).forEach((entry) => {
+      if (!Number.isInteger(entry.index) || !Number.isFinite(entry.value)) return;
       if (state.held.has(entry.index)) return;
       if ((state.writtenAt.get(entry.index) || 0) > readEpoch) return;
       state.values.set(entry.index, entry.value);
@@ -665,7 +656,6 @@
       .sort((left, right) => (left.order || 0) - (right.order || 0))
       .forEach((page) => panelElement.appendChild(groupCard(page)));
     state.built = true;
-    scheduleMeters();
   }
 
   parent.postMessage({ protocol: PROTOCOL, kind: "ready" }, "*");

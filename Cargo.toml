@@ -8,7 +8,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 license = "GPL-3.0-only"
 repository = "https://github.com/kalexis1994/rackforge-plugin-rf-limiter"
@@ -20,8 +20,8 @@ libm = "0.2"
 
 # Portable RackForge ABI used by the processor adapter. Local contributors can
 # override this revision with `.cargo/config.toml.example`.
-rackforge-plugin-sdk = { git = "https://github.com/kalexis1994/rackforge.git", rev = "3f3a8f8d0169957e6308dab7e68e49f3834da8e2" }
+rackforge-plugin-sdk = { git = "https://github.com/kalexis1994/rackforge.git", rev = "1cd7b21c86275c65aec402045f1d3593c3ab812b" }
 
 # The host's own runtime, used by one test: the packaged component must be able
 # to start. See crates/rf-limiter-lab/tests/component_instantiates.rs.
-rackforge-plugin-runtime = { git = "https://github.com/kalexis1994/rackforge.git", rev = "3f3a8f8d0169957e6308dab7e68e49f3834da8e2" }
+rackforge-plugin-runtime = { git = "https://github.com/kalexis1994/rackforge.git", rev = "1cd7b21c86275c65aec402045f1d3593c3ab812b" }

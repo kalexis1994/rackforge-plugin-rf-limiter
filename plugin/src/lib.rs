@@ -45,6 +45,13 @@ impl Processor for RfLimiterProcessor {
         self.engine.parameter(index)
     }
 
+    fn latency_frames(&self) -> u32 {
+        self.engine
+            .latency()
+            .try_into()
+            .expect("the fixed lookahead storage fits in the portable ABI")
+    }
+
     fn reset(&mut self) {
         self.engine.reset();
     }
@@ -132,7 +139,7 @@ fn panic(_info: &core::panic::PanicInfo<'_>) -> ! {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rf_limiter_contract::index::{CEILING, INPUT, OUTPUT};
+    use rf_limiter_contract::index::{CEILING, INPUT, LOOKAHEAD, OUTPUT};
     use rf_limiter_dsp::STATE_BYTES;
 
     fn prepared() -> RfLimiterProcessor {
@@ -179,6 +186,22 @@ mod tests {
         assert!(!processor.prepare(48_000.0, 256, 2, 3));
         assert!(!processor.prepare(192_000.0, 256, 2, 2));
         assert!(processor.prepare(48_000.0, 256, 1, 2));
+    }
+
+    #[test]
+    fn reports_the_current_lookahead_latency_to_the_host() {
+        let mut processor = prepared();
+        assert_eq!(
+            processor.latency_frames(),
+            processor.engine.latency() as u32
+        );
+        let initial = processor.latency_frames();
+        assert!(processor.set_parameter(LOOKAHEAD, 10.0));
+        assert_eq!(
+            processor.latency_frames(),
+            processor.engine.latency() as u32
+        );
+        assert!(processor.latency_frames() > initial);
     }
 
     #[test]

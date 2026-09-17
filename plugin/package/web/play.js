@@ -4,8 +4,8 @@
  * The page builds itself from the parameter schema the host sends back, so it
  * has no private list of controls: adding one in the Rust contract makes it
  * appear here. Pages become groups; a float is a knob, a boolean a switch, an
- * enum a row of choices, a meter a bar that is read back from the engine
- * while the page is visible.
+ * enum a row of choices, and a meter a bar updated by RackForge's canonical
+ * parameter stream.
  *
  * Three things this surface has to get right to be usable on a stage rather
  * than in a screenshot.
@@ -36,12 +36,18 @@
   const STATUS_LINGER = 4000;
   /// How long to wait for the host before giving up on a request.
   const REQUEST_TIMEOUT = 8000;
-  /// How often the meters are read while the page is visible.
-  const METER_INTERVAL = 120;
 
   const panelElement = document.getElementById("panel");
   const presetElement = document.getElementById("presets");
   const statusElement = document.getElementById("status");
+  const ceilingReading = document.getElementById("ceiling-reading");
+  const ceilingSummary = document.getElementById("ceiling-summary");
+  const scopeInput = document.getElementById("scope-input");
+  const scopeReduction = document.getElementById("scope-reduction");
+  const scopeOutput = document.getElementById("scope-output");
+  const scopeOutputBox = document.getElementById("scope-output-box");
+  const historyLine = document.getElementById("history-line");
+  const historyFill = document.getElementById("history-fill");
 
   const state = {
     surface: "play",
@@ -66,7 +72,8 @@
   let lastWriteAt = 0;
   let refreshTimer = null;
   let statusTimer = null;
-  let meterTimer = null;
+  let scopeFrame = null;
+  const reductionHistory = Array(96).fill(0);
 
   /* --------------------------------------------------------------- bridge */
 
@@ -114,6 +121,15 @@
       return;
     }
 
+    if (message.kind === "parameter_changed") {
+      applyValues(
+        [{ index: message.parameter_index, value: message.value }],
+        writeEpoch,
+      );
+      publishSurfaceInfo();
+      return;
+    }
+
     if (message.kind !== "response") return;
     const waiting = pending.get(message.request_id);
     if (!waiting) return;
@@ -150,7 +166,6 @@
   window.addEventListener("pagehide", endGestures);
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) endGestures();
-    scheduleMeters();
   });
 
   /* ---------------------------------------------------------------- status */
@@ -186,11 +201,24 @@
 
   function valueOf(parameter) {
     const stored = state.values.get(parameter.index);
-    if (stored !== undefined) return stored;
+    if (Number.isFinite(stored)) return stored;
     const kind = parameter.kind;
     if (kind.type === "boolean") return kind.default ? 1 : 0;
-    if (kind.type === "meter") return kind.maximum;
+    if (kind.type === "meter") {
+      return parameter.id === "meter.input" || parameter.id === "meter.output"
+        ? kind.minimum
+        : kind.maximum;
+    }
     return kind.default;
+  }
+
+  function parameterById(id) {
+    return state.schema && state.schema.parameters.find((parameter) => parameter.id === id);
+  }
+
+  function valueById(id, fallback) {
+    const parameter = parameterById(id);
+    return parameter ? valueOf(parameter) : fallback;
   }
 
   /* ------------------------------------------------------------ write path */
@@ -201,6 +229,7 @@
     state.values.set(parameter.index, value);
     state.queue.set(parameter.index, value);
     state.writtenAt.set(parameter.index, writeEpoch);
+    scheduleScope();
     if (!state.edited) {
       state.edited = true;
       idle();
@@ -425,7 +454,7 @@
     wrapper.className = "knob";
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "toggle";
+    button.className = "toggle" + (parameter.id === "output.delta_listen" ? " delta" : "");
     button.textContent = parameter.name;
     button.setAttribute("aria-label", parameter.name);
     button.addEventListener("click", () => {
@@ -487,11 +516,12 @@
     return wrapper;
   }
 
-  /** A reading from the engine: a bar from the right, as gain reduction is drawn. */
+  /** A reading from the engine: reduction retreats from the right; levels rise from the left. */
   function meterControl(parameter) {
     const kind = parameter.kind;
     const wrapper = document.createElement("div");
-    wrapper.className = "knob wide meter";
+    const levelMeter = parameter.id === "meter.input" || parameter.id === "meter.output";
+    wrapper.className = "knob wide meter" + (levelMeter ? " level" : " reduction");
     const label = document.createElement("div");
     label.className = "label";
     label.textContent = parameter.name;
@@ -516,7 +546,9 @@
 
     function paint(value) {
       const clamped = Math.min(kind.maximum, Math.max(kind.minimum, value));
-      const fraction = (kind.maximum - clamped) / (kind.maximum - kind.minimum);
+      const fraction = levelMeter
+        ? (clamped - kind.minimum) / (kind.maximum - kind.minimum)
+        : (kind.maximum - clamped) / (kind.maximum - kind.minimum);
       fill.style.width = (fraction * 100).toFixed(1) + "%";
       reading.textContent = formatValue(parameter, clamped);
       track.setAttribute("aria-valuenow", String(clamped));
@@ -557,6 +589,53 @@
     return card;
   }
 
+  /* --------------------------------------------------------- live scope */
+
+  function displayDb(value, unit) {
+    const safe = Number.isFinite(value) ? value : -60;
+    return safe.toFixed(1).replace("-", "−") + " " + unit;
+  }
+
+  function renderScope() {
+    scopeFrame = null;
+    if (!state.schema) return;
+    const ceiling = valueById("limiter.ceiling", -1);
+    const input = valueById("meter.input", -60);
+    const reduction = valueById("output.reduction", 0);
+    const output = valueById("meter.output", -60);
+    const truePeak = valueById("limiter.true_peak", 1) >= 0.5;
+    const linked = valueById("limiter.link", 1) >= 0.5;
+    const delta = valueById("output.delta_listen", 0) >= 0.5;
+    const lookahead = valueById("limiter.lookahead", 2);
+
+    ceilingReading.textContent = displayDb(ceiling, "dBTP");
+    ceilingSummary.textContent = delta
+      ? "Delta listen · removed signal only"
+      : (truePeak ? "True peak" : "Sample peak") + " · " +
+        (linked ? "linked" : "dual mono") + " · " + lookahead.toFixed(1) + " ms ahead";
+    scopeInput.textContent = displayDb(input, "dB");
+    scopeReduction.textContent = displayDb(reduction, "dB");
+    scopeOutput.textContent = displayDb(output, "dB");
+    scopeOutputBox.classList.toggle("safe", output <= ceiling + 0.2);
+
+    const points = reductionHistory.map((value, index) => {
+      const x = 5 + (index / (reductionHistory.length - 1)) * 190;
+      const amount = Math.min(30, Math.max(0, -value));
+      const y = 6 + (amount / 30) * 68;
+      return [x, y];
+    });
+    const path = points.map((point, index) =>
+      (index === 0 ? "M " : " L ") + point[0].toFixed(2) + " " + point[1].toFixed(2),
+    ).join("");
+    historyLine.setAttribute("d", path);
+    historyFill.setAttribute("d", path + " L 195 6 L 5 6 Z");
+  }
+
+  function scheduleScope() {
+    if (scopeFrame !== null) return;
+    scopeFrame = requestAnimationFrame(renderScope);
+  }
+
   /* -------------------------------------------------------------- meters */
 
   let publishedInfo = "";
@@ -567,21 +646,6 @@
     if (value === publishedInfo) return;
     publishedInfo = value;
     call("plugin.set_surface_info", { label: SURFACE_LABEL, value: value }).catch(() => undefined);
-  }
-
-  /**
-   * Reads the meters back while the page is visible. The read is the same
-   * `plugin.parameters` the page refreshes with, so it respects a held
-   * control and a write in flight the same way.
-   */
-  function scheduleMeters() {
-    clearInterval(meterTimer);
-    meterTimer = null;
-    if (document.hidden || state.meters.length === 0) return;
-    meterTimer = setInterval(() => {
-      if (state.queue.size > 0 || writing) return;
-      refresh(true);
-    }, METER_INTERVAL);
   }
 
   /* ------------------------------------------------------------- presets */
@@ -620,12 +684,19 @@
 
   function applyValues(values, readEpoch) {
     (values || []).forEach((entry) => {
+      if (!Number.isInteger(entry.index) || !Number.isFinite(entry.value)) return;
       if (state.held.has(entry.index)) return;
       if ((state.writtenAt.get(entry.index) || 0) > readEpoch) return;
       state.values.set(entry.index, entry.value);
+      const parameter = state.schema.parameters.find((candidate) => candidate.index === entry.index);
+      if (parameter && parameter.id === "output.reduction") {
+        reductionHistory.push(entry.value);
+        reductionHistory.shift();
+      }
       const widget = state.controls.get(entry.index);
       if (widget) widget.apply(entry.value);
     });
+    scheduleScope();
   }
 
   function scheduleRefresh(delay) {
@@ -665,7 +736,7 @@
       .sort((left, right) => (left.order || 0) - (right.order || 0))
       .forEach((page) => panelElement.appendChild(groupCard(page)));
     state.built = true;
-    scheduleMeters();
+    scheduleScope();
   }
 
   parent.postMessage({ protocol: PROTOCOL, kind: "ready" }, "*");

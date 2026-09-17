@@ -3,10 +3,10 @@ id = "org.rackforge.rf-limiter"
 name = "RF-Limiter"
 short_name = "RF-LIM"
 vendor = "RackForge Community"
-version = "0.1.0"
-description = "A lookahead true-peak limiter: a ceiling in dBTP, a programme-dependent release, stereo link, and a gain-reduction meter."
+version = "0.2.0"
+description = "A lookahead true-peak limiter with a guaranteed final ceiling, programme-dependent release, stereo or dual-mono operation, delta audition, live levels, and gain-reduction history."
 kind = "effect"
-state_version = 1
+state_version = 2
 capabilities = [
     "audio_input",
     "audio_output",

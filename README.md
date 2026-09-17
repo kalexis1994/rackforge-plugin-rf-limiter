@@ -1,13 +1,16 @@
 # RF-Limiter
 
 A lookahead true-peak limiter for [RackForge](https://github.com/kalexis1994/rackforge):
-a ceiling in dBTP, a release that follows the programme or a fixed time,
-stereo link, and a gain-reduction meter. The effect the piano goes through
+a guaranteed final ceiling in dBTP, a release that follows the programme or
+a fixed time, stereo link, delta audition, live input and output levels, and
+a gain-reduction history. The effect the piano goes through
 last, so that the +6 dB the model gained in its trim never reaches the
 converter.
 
-> `v0.1.0` is the first working version. The engine runs, the package
-> installs, and the limits are the ones stated here.
+> `v0.2.0` migrates the original nine-value state with the same parameter
+> mapping. Delta Listen and the live meters are appended to the contract. The output
+> trim now participates in gain calculation, so positive trim can no longer
+> push the final signal beyond the declared ceiling.
 
 ## How it holds the ceiling
 
@@ -32,7 +35,10 @@ decibel. *Stereo Link* applies the smaller of the two sides' gains to both,
 which keeps the image where it was.
 
 The ceiling is held by construction; a sample clamp under it catches the
-rounding the mean leaves behind.
+rounding the mean leaves behind. Input drive and output trim both participate
+in that calculation, so the ceiling describes the actual final output. *Delta
+Listen* subtracts that output from the delayed driven signal, exposing only
+what the limiter removed; its monitor output is protected by the same ceiling.
 
 ## Controls
 
@@ -45,8 +51,21 @@ rounding the mean leaves behind.
 | Lookahead | 0 … 10 ms | How far ahead the detector looks; twice this is the latency. |
 | Stereo Link | on/off | One gain for both sides. |
 | True Peak | on/off | Inter-sample peak detection. |
-| Output | −24 … +24 dB | Trim after the ceiling. |
+| Output | −24 … +24 dB | Final trim included in the ceiling calculation. |
 | Gain Reduction | meter | How much is being taken away, in dB. |
+| Delta Listen | on/off | Auditions only the signal removed by limiting. |
+| Input / Output Peak | meters | Live driven input and protected output, in dBFS. |
+
+## Factory settings
+
+| Setting | Drive | Ceiling | Lookahead | Release | Purpose |
+| --- | --- | --- | --- | --- | --- |
+| Transparent | 0 dB | −1 dBTP | 2 ms | Auto | General final protection. |
+| Stage | +3 dB | −0.3 dBTP | 3 ms | Auto | Louder live output with minimal headroom. |
+| Safety | 0 dB | −3 dBTP | 5 ms | 200 ms | Conservative protection. |
+| Broadcast | 0 dB | −1 dBTP | 2 ms | 40 ms | Fast, dual-mono control. |
+| Dense Master | +6 dB | −1 dBTP | 3 ms | Auto | Firm programme level. |
+| Transient Guard | 0 dB | −1 dBTP | 8 ms | 180 ms | Isolated peak control. |
 
 ## Build and install
 

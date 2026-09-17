@@ -14,3 +14,8 @@ pub const TRUE_PEAK: u32 = 6;
 pub const OUTPUT: u32 = 7;
 /// Read-only: how much gain the limiter is taking away, in dB at or below 0.
 pub const REDUCTION: u32 = 8;
+pub const DELTA_LISTEN: u32 = 9;
+/// Read-only peak level after input drive and before limiting.
+pub const INPUT_LEVEL: u32 = 10;
+/// Read-only peak level at the final output.
+pub const OUTPUT_LEVEL: u32 = 11;

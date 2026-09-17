@@ -13,12 +13,12 @@ pub mod preset;
 pub use preset::{PRESET_COUNT, PRESETS, Preset, settings_for};
 
 /// Number of public parameters. Also the length of the state block in `f32`s.
-pub const PARAMETER_COUNT: usize = 9;
+pub const PARAMETER_COUNT: usize = 12;
 
 /// The parameter count of each earlier state layout, so a block saved by an
 /// older build can still be read. Length is the only thing that identifies a
 /// layout here, which is why parameters are only ever appended.
-pub const PREVIOUS_PARAMETER_COUNTS: [usize; 0] = [];
+pub const PREVIOUS_PARAMETER_COUNTS: [usize; 1] = [9];
 
 /// Editor pages. RackForge renders them in `order`; the web surface uses the
 /// same identifiers to group its controls.
@@ -212,6 +212,29 @@ const fn switch(
     }
 }
 
+const fn meter(
+    index: u32,
+    id: &'static str,
+    name: &'static str,
+    order: i32,
+    minimum: f32,
+    maximum: f32,
+) -> ParameterSpec {
+    ParameterSpec {
+        index,
+        id,
+        name,
+        page: "output",
+        order,
+        kind: Kind::Meter {
+            minimum,
+            maximum,
+            unit: Some("dB"),
+        },
+        control: Control::Meter,
+    }
+}
+
 pub const PARAMETERS: [ParameterSpec; PARAMETER_COUNT] = [
     decibels(0, "limiter.input", "Input", "limiter", 0, -24.0, 24.0, 0.0),
     ParameterSpec {
@@ -286,6 +309,9 @@ pub const PARAMETERS: [ParameterSpec; PARAMETER_COUNT] = [
         },
         control: Control::Meter,
     },
+    switch(9, "output.delta_listen", "Delta Listen", "output", 2, false),
+    meter(10, "meter.input", "Input Peak", 3, -60.0, 12.0),
+    meter(11, "meter.output", "Output Peak", 4, -60.0, 12.0),
 ];
 
 /// The flat settings block: one `f32` per parameter, in index order. It is
@@ -447,5 +473,8 @@ mod tests {
         expect(index::TRUE_PEAK, "limiter.true_peak");
         expect(index::OUTPUT, "output.trim");
         expect(index::REDUCTION, "output.reduction");
+        expect(index::DELTA_LISTEN, "output.delta_listen");
+        expect(index::INPUT_LEVEL, "meter.input");
+        expect(index::OUTPUT_LEVEL, "meter.output");
     }
 }

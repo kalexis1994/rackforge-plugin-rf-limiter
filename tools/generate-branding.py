@@ -117,7 +117,7 @@ def make_banner() -> None:
     title = font(96)
     draw.text((1240, 160), "RF-LIMITER", font=title, fill=INK, anchor="mm")
     subtitle = font(34)
-    draw.text((1240, 240), "Lookahead true-peak limiter", font=subtitle, fill=ACCENT, anchor="mm")
+    draw.text((1240, 240), "True peak · lookahead · final protection", font=subtitle, fill=ACCENT, anchor="mm")
     image.save(OUTPUT / "banner.png")
 
 
@@ -128,13 +128,13 @@ def make_splash() -> None:
     title = font(150)
     draw.text((960, 200), "RF-LIMITER", font=title, fill=INK, anchor="mm")
     subtitle = font(44)
-    draw.text((960, 320), "Lookahead true-peak limiter", font=subtitle, fill=ACCENT, anchor="mm")
+    draw.text((960, 320), "True peak · lookahead · final protection", font=subtitle, fill=ACCENT, anchor="mm")
     draw.rounded_rectangle([160, 420, 1760, 920], radius=40, fill=PANEL_LIGHT, outline=STEEL, width=4)
     limited_wave(draw, (220, 470, 1700, 870), ceiling=0.6, stroke=10)
     footer = font(34)
     draw.text(
         (960, 990),
-        "ceiling in dBTP  ·  programme-dependent release  ·  stereo link  ·  gain reduction meter",
+        "guaranteed final ceiling  ·  programme release  ·  delta listen  ·  live level and reduction history",
         font=footer,
         fill=MUTED,
         anchor="mm",

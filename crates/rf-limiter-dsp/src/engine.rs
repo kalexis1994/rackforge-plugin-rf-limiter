@@ -33,6 +33,8 @@ const METER_RELEASE_S: f32 = 0.6;
 
 /// Below this the meter reads its floor rather than minus infinity.
 const METER_FLOOR_DB: f32 = -30.0;
+const LEVEL_FLOOR_DB: f32 = -60.0;
+const LEVEL_CEILING_DB: f32 = 12.0;
 
 /// The three interpolation phases between two samples, at four times the
 /// rate: enough to see an inter-sample peak to within a tenth of a decibel.
@@ -73,6 +75,7 @@ pub struct Engine {
     auto_release: bool,
     linked: bool,
     true_peak: bool,
+    delta_listen: bool,
     release_fixed: f32,
     release_fast: f32,
     release_slow: f32,
@@ -83,6 +86,8 @@ pub struct Engine {
     lanes: [Lane; 2],
     /// The smallest gain applied lately, letting go at the meter's rate.
     meter_gain: f32,
+    meter_input: f32,
+    meter_output: f32,
 }
 
 impl Default for Engine {
@@ -98,6 +103,7 @@ impl Default for Engine {
             auto_release: true,
             linked: true,
             true_peak: true,
+            delta_listen: false,
             release_fixed: 1.0,
             release_fast: 1.0,
             release_slow: 1.0,
@@ -105,6 +111,8 @@ impl Default for Engine {
             kernel: [[0.0; 8]; 3],
             lanes: [Lane::default(), Lane::default()],
             meter_gain: 1.0,
+            meter_input: 0.0,
+            meter_output: 0.0,
         }
     }
 }
@@ -133,6 +141,8 @@ impl Engine {
             lane.rest(length);
         }
         self.meter_gain = 1.0;
+        self.meter_input = 0.0;
+        self.meter_output = 0.0;
     }
 
     pub fn set_parameter(&mut self, index: u32, value: f64) -> bool {
@@ -151,12 +161,29 @@ impl Engine {
 
     /// A parameter's value: the setting, or, for the meter, the reading.
     pub fn parameter(&self, index: u32) -> Option<f64> {
-        if index == REDUCTION {
-            return Some(f64::from(clamp(
-                gain_to_db(self.meter_gain),
-                METER_FLOOR_DB,
-                0.0,
-            )));
+        match index {
+            REDUCTION => {
+                return Some(f64::from(clamp(
+                    gain_to_db(self.meter_gain),
+                    METER_FLOOR_DB,
+                    0.0,
+                )));
+            }
+            INPUT_LEVEL => {
+                return Some(f64::from(clamp(
+                    gain_to_db(self.meter_input),
+                    LEVEL_FLOOR_DB,
+                    LEVEL_CEILING_DB,
+                )));
+            }
+            OUTPUT_LEVEL => {
+                return Some(f64::from(clamp(
+                    gain_to_db(self.meter_output),
+                    LEVEL_FLOOR_DB,
+                    LEVEL_CEILING_DB,
+                )));
+            }
+            _ => {}
         }
         self.settings.get(index)
     }
@@ -224,6 +251,7 @@ impl Engine {
         self.auto_release = settings.engaged(AUTO_RELEASE);
         self.linked = settings.engaged(LINK);
         self.true_peak = settings.engaged(TRUE_PEAK);
+        self.delta_listen = settings.engaged(DELTA_LISTEN);
         let rate = self.sample_rate;
         self.release_fixed = one_pole(settings.value(RELEASE) * 0.001, rate);
         self.release_fast = one_pole(AUTO_FAST_S, rate);
@@ -261,14 +289,17 @@ impl Engine {
     pub fn process(&mut self, left: f32, right: f32) -> (f32, f32) {
         let inputs = [sanitise(left), sanitise(right)];
         let mut wanted = [1.0_f32; 2];
+        let mut input_peak = 0.0_f32;
         for (lane, input) in self.lanes.iter_mut().zip(inputs) {
             lane.delay.push(input);
             lane.history.push(input);
         }
         for (slot, lane) in wanted.iter_mut().zip(self.lanes.iter()) {
             let peak = self.peak(lane);
-            if peak > self.ceiling {
-                *slot = self.ceiling / peak;
+            input_peak = input_peak.max(peak);
+            let projected = peak * self.output_gain;
+            if projected > self.ceiling {
+                *slot = self.ceiling / projected;
             }
         }
         if self.linked {
@@ -309,16 +340,30 @@ impl Engine {
             if gain < block_min {
                 block_min = gain;
             }
-            let sample = lane.delay.read(age) * self.input_gain * gain;
+            let dry = lane.delay.read(age) * self.input_gain * self.output_gain;
+            let sample = dry * gain;
             // The ramp holds the ceiling by construction; the clamp is the
             // net under it, for the rounding the mean leaves behind.
             let held = clamp(sample, -self.ceiling, self.ceiling);
-            *output = sanitise(held * self.output_gain);
+            *output = sanitise(if self.delta_listen {
+                clamp(dry - held, -self.ceiling, self.ceiling)
+            } else {
+                held
+            });
         }
 
         self.meter_gain += (1.0 - self.meter_gain) * self.meter_release;
         if block_min < self.meter_gain {
             self.meter_gain = block_min;
+        }
+        self.meter_input += (0.0 - self.meter_input) * self.meter_release;
+        if input_peak > self.meter_input {
+            self.meter_input = input_peak;
+        }
+        let output_peak = abs(outputs[0]).max(abs(outputs[1]));
+        self.meter_output += (0.0 - self.meter_output) * self.meter_release;
+        if output_peak > self.meter_output {
+            self.meter_output = output_peak;
         }
         (outputs[0], outputs[1])
     }
@@ -417,6 +462,42 @@ mod tests {
     }
 
     #[test]
+    fn output_trim_is_accounted_for_before_the_final_ceiling() {
+        let mut engine = prepared();
+        assert!(engine.set_parameter(CEILING, -3.0));
+        assert!(engine.set_parameter(OUTPUT, 12.0));
+        let peak = peak_of(&mut engine, 0.5, 440.0, 0.2, 0.5);
+        let ceiling = db_to_gain(-3.0);
+        assert!(peak <= ceiling * 1.0005, "peak {peak} over {ceiling}");
+        assert!(peak > ceiling * 0.9, "peak {peak} well under {ceiling}");
+    }
+
+    #[test]
+    fn level_meters_follow_the_driven_input_and_final_output() {
+        let mut engine = prepared();
+        assert!(engine.set_parameter(INPUT, 6.0));
+        assert!(engine.set_parameter(CEILING, -6.0));
+        peak_of(&mut engine, 0.5, 440.0, 0.0, 0.5);
+        let input = engine.parameter(INPUT_LEVEL).unwrap();
+        let output = engine.parameter(OUTPUT_LEVEL).unwrap();
+        assert!((-0.5..=0.5).contains(&input), "input meter {input}");
+        assert!((-6.5..=-5.5).contains(&output), "output meter {output}");
+    }
+
+    #[test]
+    fn delta_listen_is_silent_below_the_ceiling_and_reveals_limiting() {
+        let mut engine = prepared();
+        assert!(engine.set_parameter(DELTA_LISTEN, 1.0));
+        let quiet = peak_of(&mut engine, 0.25, 440.0, 0.0, 0.5);
+        assert!(quiet < 1.0e-4, "quiet delta {quiet}");
+
+        engine.reset();
+        let removed = peak_of(&mut engine, 2.0, 440.0, 0.0, 0.5);
+        assert!(removed > 0.5, "removed signal {removed}");
+        assert!(removed <= db_to_gain(-1.0) * 1.0005);
+    }
+
+    #[test]
     fn the_lookahead_holds_the_ceiling_at_every_setting() {
         for lookahead_ms in [0.0, 0.5, 2.0, 10.0] {
             let mut engine = prepared();
@@ -505,6 +586,20 @@ mod tests {
         assert_eq!(other.parameter(LINK), Some(0.0));
         assert!(!other.load_state(&block[..7]));
         assert!(!other.load_state(&block[..8]));
+    }
+
+    #[test]
+    fn version_one_state_loads_with_delta_off_and_live_meters_at_rest() {
+        let defaults = Settings::default().as_array();
+        let mut old = [0_u8; 9 * 4];
+        for (slot, value) in old.as_chunks_mut::<4>().0.iter_mut().zip(defaults) {
+            *slot = value.to_le_bytes();
+        }
+        let mut engine = prepared();
+        assert!(engine.load_state(&old));
+        assert_eq!(engine.parameter(DELTA_LISTEN), Some(0.0));
+        assert_eq!(engine.parameter(INPUT_LEVEL), Some(-60.0));
+        assert_eq!(engine.parameter(OUTPUT_LEVEL), Some(-60.0));
     }
 
     #[test]

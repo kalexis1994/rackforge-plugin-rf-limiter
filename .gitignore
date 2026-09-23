@@ -1,6 +1,5 @@
 /target/
 /artifacts/
 /tmp/
-/.cargo/config.toml
 /plugin/package/component.wasm
 *.rfplugin
